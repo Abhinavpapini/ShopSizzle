@@ -43,6 +43,11 @@ const Products = () => {
     }
   }, [dispatch, status]);
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   // Update search term when URL changes
   useEffect(() => {
     const urlSearch = searchParams.get("search");

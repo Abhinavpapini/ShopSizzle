@@ -1,5 +1,5 @@
 import { SignIn, SignUp } from '@clerk/clerk-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,11 @@ import Navbar from '@/components/layout/Navbar';
 const Auth = () => {
   const [isSignIn, setIsSignIn] = useState(true);
   const navigate = useNavigate();
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

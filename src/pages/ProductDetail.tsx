@@ -10,8 +10,9 @@ import { ArrowLeft, Star, ShoppingCart, Heart, Share2 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { addToCart } from "@/store/slices/cartSlice";
 import { toast } from "@/hooks/use-toast";
+import { useWishlist } from "@/hooks/useWishlist";
 import { formatINR } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +20,12 @@ const ProductDetail = () => {
   const dispatch = useDispatch();
   const products = useSelector((s: RootState) => s.products.items);
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+
+  // Scroll to top when component mounts or ID changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [id]);
 
   const product = products.find((p) => p.id === id);
 
@@ -52,11 +58,7 @@ const ProductDetail = () => {
   };
 
   const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    toast({
-      title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
-      description: product.title,
-    });
+    toggleWishlist(product);
   };
 
   const handleShare = async () => {
@@ -220,7 +222,7 @@ const ProductDetail = () => {
                 >
                   <Heart
                     className={`h-5 w-5 ${
-                      isWishlisted ? "fill-red-500 text-red-500" : ""
+                      isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""
                     }`}
                   />
                 </Button>

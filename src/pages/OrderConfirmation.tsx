@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
 import type { CartItem } from "@/store/slices/cartSlice";
+import { useAuth } from "@/lib/auth";
 import Navbar from "@/components/layout/Navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,20 @@ import {
   CreditCard,
   Mail
 } from "lucide-react";
+
+interface Order {
+  id: string;
+  paymentId: string;
+  total: number;
+  items: Array<{
+    id: string;
+    title: string;
+    price: number;
+    qty: number;
+  }>;
+  date: string;
+  status: string;
+}
 
 interface OrderDetails {
   id: string;
@@ -40,27 +55,77 @@ const OrderConfirmation = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
-  const cartItems = useSelector((s: RootState) => s.cart.items);
-  const cartTotal = useSelector((s: RootState) => s.cart.totalAmount);
+  const { user } = useAuth();
+  // Remove unused selectors since we'll get data from localStorage
+  // const cartItems = useSelector((s: RootState) => s.cart.items);
+  // const cartTotal = useSelector((s: RootState) => s.cart.totalAmount);
 
   useEffect(() => {
     // In a real app, you'd fetch order details from the server using order ID
     const orderId = searchParams.get("order_id") || generateOrderId();
     const paymentId = searchParams.get("payment_id");
+    const amountFromUrl = searchParams.get("amount");
 
-    if (!paymentId && cartItems.length === 0) {
-      // If no payment ID and no items in cart, redirect to home
+    // Try to get order data from localStorage (saved before cart was cleared)
+    const pendingOrderData = localStorage.getItem('pendingOrder');
+    let orderItems: CartItem[] = [];
+    let orderTotal = 0;
+    
+    console.log('OrderConfirmation - pendingOrderData:', pendingOrderData);
+    console.log('OrderConfirmation - amountFromUrl:', amountFromUrl);
+    
+    if (pendingOrderData) {
+      try {
+        const parsedData = JSON.parse(pendingOrderData);
+        console.log('OrderConfirmation - parsedData:', parsedData);
+        orderItems = parsedData.items || [];
+        orderTotal = parsedData.total || 0;
+        
+        console.log('OrderConfirmation - orderItems:', orderItems);
+        console.log('OrderConfirmation - orderTotal:', orderTotal);
+        
+        // Clean up the temporary data
+        localStorage.removeItem('pendingOrder');
+      } catch (error) {
+        console.error('Failed to parse pending order data:', error);
+      }
+    } else {
+      console.log('OrderConfirmation - No pendingOrder data found in localStorage');
+      
+      // Fallback: try to get amount from URL and find order in user's order history
+      if (amountFromUrl && user?.id) {
+        try {
+          const existingOrders = JSON.parse(localStorage.getItem(`orders_${user.id}`) || '[]');
+          const recentOrder = existingOrders.find((order: Order) => order.id === orderId || order.paymentId === paymentId);
+          if (recentOrder) {
+            orderItems = recentOrder.items || [];
+            orderTotal = recentOrder.total || parseFloat(amountFromUrl) || 0;
+            console.log('OrderConfirmation - Found order in history:', recentOrder);
+          } else {
+            // If no order found but we have amount, use that
+            orderTotal = parseFloat(amountFromUrl) || 0;
+            console.log('OrderConfirmation - Using amount from URL:', orderTotal);
+          }
+        } catch (error) {
+          console.error('Failed to find order in history:', error);
+          orderTotal = parseFloat(amountFromUrl) || 0;
+        }
+      }
+    }
+
+    if (!paymentId && orderItems.length === 0 && !orderTotal) {
+      // If no payment ID and no items and no total, redirect to home
       navigate("/");
       return;
     }
 
     // Mock order details - in real app this would come from your backend
-    setOrderDetails({
+    const newOrderDetails = {
       id: orderId,
       paymentId: paymentId || "mock_payment_id",
       status: "confirmed",
-      items: cartItems,
-      total: cartTotal,
+      items: orderItems,
+      total: orderTotal,
       estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
       shippingAddress: {
         name: "John Doe",
@@ -69,8 +134,49 @@ const OrderConfirmation = () => {
         postalCode: "400001",
         country: "India"
       }
-    });
-  }, [searchParams, cartItems, cartTotal, navigate]);
+    };
+
+    console.log('OrderConfirmation - Final order details:', newOrderDetails);
+    setOrderDetails(newOrderDetails);
+
+    // Save order to localStorage for profile stats (in real app, this would be handled by backend)
+    // Only save if not already saved by CartSheet
+    if (user && paymentId && orderTotal > 0) {
+      try {
+        const existingOrders = JSON.parse(localStorage.getItem(`orders_${user.id}`) || '[]');
+        const existingOrder = existingOrders.find((order: Order) => order.id === orderId || order.paymentId === paymentId);
+        
+        if (!existingOrder) {
+          const orderForStorage = {
+            id: orderId,
+            paymentId,
+            total: orderTotal,
+            items: orderItems.map(item => ({ 
+              id: item.id, 
+              title: item.title, 
+              price: item.price, 
+              qty: item.qty 
+            })),
+            date: new Date().toISOString(),
+            status: "confirmed"
+          };
+          existingOrders.push(orderForStorage);
+          localStorage.setItem(`orders_${user.id}`, JSON.stringify(existingOrders));
+          
+          console.log('OrderConfirmation - Order saved successfully:', orderForStorage);
+        } else {
+          console.log('OrderConfirmation - Order already exists in history');
+        }
+      } catch (error) {
+        console.error('Failed to save order to localStorage:', error);
+      }
+    }
+  }, [searchParams, navigate, user]);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const generateOrderId = () => {
     return `ORD-${Date.now().toString().slice(-8).toUpperCase()}`;

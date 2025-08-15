@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store/store";
 import Navbar from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import { formatINR } from "@/lib/utils";
 import { 
   User, 
   Mail, 
@@ -22,14 +26,66 @@ import {
 
 const Profile = () => {
   const { user, loading, signOut, isAuthenticated } = useAuth();
+  const { wishlistCount, wishlistItems } = useWishlist();
+  const cartTotal = useSelector((s: RootState) => s.cart.totalAmount);
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  
+  // Calculate total spent (in a real app, this would come from order history API)
+  // For now, we'll use a simple calculation based on completed orders stored in localStorage
+  const [totalSpent, setTotalSpent] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    // Load order history from localStorage (in real app, this would be from API)
+    if (!user?.id) return;
+    
+    setStatsLoading(true);
+    try {
+      const orderHistory = JSON.parse(localStorage.getItem(`orders_${user.id}`) || '[]');
+      const spent = orderHistory.reduce((sum: number, order: { total?: number }) => sum + (order.total || 0), 0);
+      setTotalSpent(spent);
+      setTotalOrders(orderHistory.length);
+    } catch {
+      setTotalSpent(0);
+      setTotalOrders(0);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate("/auth");
     }
   }, [isAuthenticated, loading, navigate]);
+
+  // Refresh stats when the page becomes visible (user navigates back to it)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?.id) {
+        // Reload order history when page becomes visible
+        try {
+          const orderHistory = JSON.parse(localStorage.getItem(`orders_${user.id}`) || '[]');
+          const spent = orderHistory.reduce((sum: number, order: { total?: number }) => sum + (order.total || 0), 0);
+          setTotalSpent(spent);
+          setTotalOrders(orderHistory.length);
+        } catch {
+          setTotalSpent(0);
+          setTotalOrders(0);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user?.id]);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -50,6 +106,8 @@ const Profile = () => {
       setIsSigningOut(false);
     }
   };
+
+
 
   if (loading) {
     return (
@@ -125,7 +183,7 @@ const Profile = () => {
                   <ShoppingBag className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">{statsLoading ? "..." : totalOrders}</p>
                   <p className="text-sm text-muted-foreground">Total Orders</p>
                 </div>
               </div>
@@ -139,7 +197,7 @@ const Profile = () => {
                   <Heart className="h-5 w-5 text-red-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">{wishlistCount}</p>
                   <p className="text-sm text-muted-foreground">Wishlist Items</p>
                 </div>
               </div>
@@ -153,7 +211,7 @@ const Profile = () => {
                   <CreditCard className="h-5 w-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">₹0</p>
+                  <p className="text-2xl font-bold">{statsLoading ? "..." : formatINR(totalSpent)}</p>
                   <p className="text-sm text-muted-foreground">Total Spent</p>
                 </div>
               </div>

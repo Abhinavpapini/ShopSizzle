@@ -1,38 +1,45 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
+import { useWishlist } from "@/hooks/useWishlist";
 import Navbar from "@/components/layout/Navbar";
 import ProductCard from "@/components/products/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, ShoppingBag } from "lucide-react";
-import type { Product } from "@/types/product";
 
 const Wishlist = () => {
-  const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
+  const { isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
+  const { wishlistItems, removeFromWishlist, clearWishlist } = useWishlist();
 
   useEffect(() => {
-    // Load wishlist from localStorage
-    const saved = localStorage.getItem("wishlist");
-    if (saved) {
-      try {
-        setWishlistItems(JSON.parse(saved));
-      } catch {
-        // If parsing fails, start with empty wishlist
-        setWishlistItems([]);
-      }
+    if (!loading && !isAuthenticated) {
+      navigate("/auth");
     }
+  }, [isAuthenticated, loading, navigate]);
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const removeFromWishlist = (productId: string) => {
-    const updated = wishlistItems.filter(item => item.id !== productId);
-    setWishlistItems(updated);
-    localStorage.setItem("wishlist", JSON.stringify(updated));
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const clearWishlist = () => {
-    setWishlistItems([]);
-    localStorage.removeItem("wishlist");
-  };
+  if (!isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="min-h-screen bg-background">

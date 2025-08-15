@@ -4,17 +4,24 @@ import type { Product } from "@/types/product";
 import { useDispatch } from "react-redux";
 import { addToCart } from "@/store/slices/cartSlice";
 import { toast } from "@/hooks/use-toast";
+import { useWishlist } from "@/hooks/useWishlist";
 import { formatINR } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { Eye } from "lucide-react";
+import { Eye, Heart } from "lucide-react";
 type Props = { product: Product };
 
 const ProductCard = ({ product }: Props) => {
   const dispatch = useDispatch();
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const onAdd = () => {
     dispatch(addToCart(product));
     toast({ title: "Added to cart", description: product.title });
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation when clicking wishlist button
+    toggleWishlist(product);
   };
 
   return (
@@ -36,6 +43,17 @@ const ProductCard = ({ product }: Props) => {
               </Button>
             </Link>
           </div>
+          {/* Wishlist button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleWishlistToggle}
+            className={`absolute top-2 right-2 h-8 w-8 p-0 bg-white/80 hover:bg-white shadow-sm ${
+              isInWishlist(product.id) ? "text-red-500" : "text-muted-foreground"
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="pt-4">

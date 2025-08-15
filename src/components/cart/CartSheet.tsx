@@ -77,7 +77,7 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
         key: key_id,
         amount: order.amount,
         currency: order.currency,
-        name: "ShopFlow",
+        name: "ShopSizzle",
         description: "Order payment",
         order_id: order.id,
         handler: async (response: { razorpay_payment_id: string; razorpay_signature: string }) => {
@@ -92,11 +92,51 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
             if (verifyError) throw verifyError;
 
             if (verifyData && 'valid' in verifyData && verifyData.valid) {
+              // Save order details to localStorage before clearing cart and also pass via URL
+              const orderData = {
+                orderId: order.id,
+                paymentId: response.razorpay_payment_id,
+                items: items,
+                total: totalAmount,
+                timestamp: Date.now()
+              };
+              
+              console.log('CartSheet - Saving order data:', orderData);
+              localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+              
+              // Also save order to user's order history immediately
+              const user = JSON.parse(localStorage.getItem('clerk-user') || 'null');
+              if (user?.id) {
+                try {
+                  const existingOrders = JSON.parse(localStorage.getItem(`orders_${user.id}`) || '[]');
+                  const orderForStorage = {
+                    id: order.id,
+                    paymentId: response.razorpay_payment_id,
+                    total: totalAmount,
+                    items: items.map(item => ({ 
+                      id: item.id, 
+                      title: item.title, 
+                      price: item.price, 
+                      qty: item.qty 
+                    })),
+                    date: new Date().toISOString(),
+                    status: "confirmed"
+                  };
+                  existingOrders.push(orderForStorage);
+                  localStorage.setItem(`orders_${user.id}`, JSON.stringify(existingOrders));
+                  console.log('CartSheet - Order saved to user history:', orderForStorage);
+                } catch (error) {
+                  console.error('Failed to save order to user history:', error);
+                }
+              }
+              
+              console.log('CartSheet - Order data saved to localStorage');
+              
               toast({ title: "Payment successful", description: "Thank you for your purchase!" });
               dispatch(clearCart());
               onOpenChange(false);
-              // Redirect to order confirmation page
-              navigate(`/order-confirmation?order_id=${order.id}&payment_id=${response.razorpay_payment_id}`);
+              // Redirect to order confirmation page with amount in URL
+              navigate(`/order-confirmation?order_id=${order.id}&payment_id=${response.razorpay_payment_id}&amount=${totalAmount}`);
             } else {
               throw new Error("Verification failed");
             }
