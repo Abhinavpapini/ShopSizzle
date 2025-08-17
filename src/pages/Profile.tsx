@@ -21,11 +21,12 @@ import {
   Settings, 
   LogOut,
   Package,
-  CreditCard
+  CreditCard,
+  BarChart3
 } from "lucide-react";
 
 const Profile = () => {
-  const { user, loading, signOut, isAuthenticated } = useAuth();
+  const { user, loading, signOut, isAuthenticated, isAdmin } = useAuth();
   const { wishlistCount, wishlistItems } = useWishlist();
   const cartTotal = useSelector((s: RootState) => s.cart.totalAmount);
   const navigate = useNavigate();
@@ -149,6 +150,11 @@ const Profile = () => {
                 <div className="flex-1">
                   <CardTitle className="text-2xl">
                     {user.name || "User"}
+                    {isAdmin && (
+                      <Badge variant="secondary" className="ml-3 bg-red-100 text-red-800">
+                        Administrator
+                      </Badge>
+                    )}
                   </CardTitle>
                   <CardDescription className="text-lg">
                     {user.email}
@@ -267,9 +273,18 @@ const Profile = () => {
               <Button variant="outline" className="w-full justify-start" asChild>
                 <Link to="/orders">
                   <Package className="mr-2 h-4 w-4" />
-                  View Order History
+                  {isAdmin ? 'All Orders' : 'View Order History'}
                 </Link>
               </Button>
+              
+              {isAdmin && (
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link to="/admin">
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Admin Dashboard
+                  </Link>
+                </Button>
+              )}
               
               <Button variant="outline" className="w-full justify-start" asChild>
                 <Link to="/wishlist">

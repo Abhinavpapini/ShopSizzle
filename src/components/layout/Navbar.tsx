@@ -22,7 +22,7 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const totalQty = useSelector((s: RootState) => s.cart.totalQty);
-  const { user, signOut, signIn, loading } = useAuth();
+  const { user, signOut, signIn, loading, isAdmin } = useAuth();
   const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
 
@@ -46,6 +46,7 @@ const Navbar = () => {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/products", label: "Products" },
+    ...(isAdmin ? [{ to: "/admin", label: "Admin" }] : []),
     { to: "/profile", label: "Profile" },
     { to: "/about", label: "About" },
   ];
@@ -173,6 +174,16 @@ const Navbar = () => {
                           Profile
                         </Link>
                       </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin" className="cursor-pointer">
+                            <div className="mr-2 h-4 w-4 rounded bg-primary/20 flex items-center justify-center">
+                              <span className="text-xs font-bold text-primary">A</span>
+                            </div>
+                            Admin Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild>
                         <Link to="/wishlist" className="cursor-pointer">
                           <Heart className="mr-2 h-4 w-4" />
@@ -258,6 +269,18 @@ const Navbar = () => {
               {/* Mobile User Actions */}
               {user && (
                 <div className="border-t border-border pt-4 space-y-3">
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-3 text-base font-medium text-foreground hover:text-primary transition-colors py-2 px-3 rounded-lg hover:bg-muted/50"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <div className="h-4 w-4 rounded bg-primary/20 flex items-center justify-center">
+                        <span className="text-xs font-bold text-primary">A</span>
+                      </div>
+                      Admin Dashboard
+                    </Link>
+                  )}
                   <Link
                     to="/wishlist"
                     className="flex items-center gap-3 text-base font-medium text-foreground hover:text-primary transition-colors py-2 px-3 rounded-lg hover:bg-muted/50"
