@@ -1,73 +1,90 @@
-# Welcome to your Lovable project
+# ShopSizzle
 
-## Project info
+ShopSizzle is a modern e-commerce web application built with Vite, React, TypeScript, shadcn-ui, and Tailwind CSS. It features authentication, product browsing, cart management, admin dashboard, and more.
 
-**URL**: https://lovable.dev/projects/77a92c81-27bb-4dd0-aa17-ea6fcdf068d4
+## Features
 
-## How can I edit this code?
+- **Authentication**: Sign in/up with Clerk, including social login (Google, GitHub, etc.)
+- **Product Catalog**: Browse, search, filter, and sort products
+- **Cart & Wishlist**: Add products to cart and wishlist
+- **Admin Dashboard**: View store stats, recent orders, and manage users/orders
+- **Responsive UI**: Mobile-friendly design using shadcn-ui and Tailwind CSS
+- **Order Management**: Track order status (delivered, shipped, processing, etc.)
+- **Profile Management**: Users can manage their profiles via Clerk
+- **Security**: Session management and protection against common attacks
 
-There are several ways of editing your application.
+## Technologies Used
 
-**Use Lovable**
+- [Vite](https://vitejs.dev/)
+- [React](https://react.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [shadcn-ui](https://ui.shadcn.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Redux Toolkit](https://redux-toolkit.js.org/)
+- [Supabase](https://supabase.com/) (integration)
+- [Clerk](https://clerk.com/) (authentication)
+- [Radix UI](https://www.radix-ui.com/) (UI primitives)
+- [Zod](https://zod.dev/) (validation)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/77a92c81-27bb-4dd0-aa17-ea6fcdf068d4) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js & npm installed ([install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
+cd ShopSizzle
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Authentication Setup (Clerk)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Create a Clerk account at [clerk.com](https://clerk.com)
+2. Create a new application and get your API keys
+3. Add your keys to `.env.local`:
 
-**Use GitHub Codespaces**
+   ```
+   VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_actual_publishable_key_here
+   CLERK_SECRET_KEY=sk_test_your_actual_secret_key_here
+   ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+4. (Optional) Enable social providers in Clerk Dashboard
+5. Restart the development server
 
-## What technologies are used for this project?
+See `CLERK_SETUP.md` for detailed instructions.
 
-This project is built with:
+## Project Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+src/
+  components/      # UI and feature components
+  data/            # Static data (e.g., products)
+  hooks/           # Custom React hooks
+  integrations/    # External service integrations (e.g., Supabase)
+  lib/             # Utility functions and auth logic
+  pages/           # Application pages (Home, Products, Admin, etc.)
+  store/           # Redux store and slices
+  types/           # TypeScript types
+public/            # Static assets
+supabase/          # Supabase functions and config
+```
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/77a92c81-27bb-4dd0-aa17-ea6fcdf068d4) and click on Share -> Publish.
+- Deploy via [Lovable](https://lovable.dev/projects/77a92c81-27bb-4dd0-aa17-ea6fcdf068d4) (Share → Publish)
+- To connect a custom domain, go to Project > Settings > Domains in Lovable
 
-## Can I connect a custom domain to my Lovable project?
+## Support
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- Clerk Documentation: https://clerk.com/docs
+- Clerk React Guide: https://clerk.com/docs/quickstarts/react
+- Lovable Docs: https://docs.lovable.dev/
